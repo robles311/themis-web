@@ -57,8 +57,15 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
     const ollamaHost = process.env.OLLAMA_HOST || 'http://localhost:11434'
-    const useDeepSeek = process.env.DEEPSEEK_API_KEY && process.env.USE_DEEPSEEK === 'true'
-    const useOpenAI = process.env.OPENAI_API_KEY && process.env.USE_OPENAI === 'true'
+    // Provider selection priority:
+    // 1. DeepSeek if key exists (default when available - most VPS have it)
+    // 2. OpenAI if key exists and no DeepSeek key
+    // 3. Ollama (local) as fallback
+    const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY
+    const hasOpenAI = !!process.env.OPENAI_API_KEY
+    const forceOllama = process.env.USE_OLLAMA === 'true'
+    const useDeepSeek = hasDeepSeek && !forceOllama
+    const useOpenAI = hasOpenAI && !hasDeepSeek && !forceOllama
 
     // Build messages array with system prompt
     const apiMessages = [

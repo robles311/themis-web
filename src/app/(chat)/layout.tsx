@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Trash2,
   ChevronDown,
+  User,
 } from "lucide-react";
 import { SPECIALTY_LIST, specialtyDisplayName, type SpecialtyId } from "@/lib/specialties";
 
@@ -198,21 +199,32 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           {/* Sidebar footer */}
           <div className="border-t px-4 py-4">
             {session?.user ? (
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-black">
-                    {session.user.name || session.user.email}
-                  </p>
-                  <p className="truncate text-xs text-gray-500">
-                    {session.user.email}
-                  </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-black">
+                      {session.user.name || session.user.email}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">
+                      {session.user.email}
+                    </p>
+                  </div>
                 </div>
-                <Link
-                  href="/api/auth/signout"
-                  className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-black"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Link>
+                <div className="flex items-center gap-1">
+                  <Link
+                    href="/profile"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-gray-600 transition-all hover:bg-gray-100 hover:text-black"
+                  >
+                    <User className="h-3.5 w-3.5" />
+                    Perfil
+                  </Link>
+                  <Link
+                    href="/api/auth/signout"
+                    className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-black"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Link>
+                </div>
               </div>
             ) : (
               <Link

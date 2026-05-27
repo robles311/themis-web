@@ -13,6 +13,9 @@ import {
   User,
   ChevronDown,
   Scale,
+  Paperclip,
+  X,
+  FileText,
 } from "lucide-react";
 
 type Message = {
@@ -41,6 +44,12 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSpecialties, setShowSpecialties] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<{
+    name: string;
+    text: string;
+  } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +76,50 @@ export default function ChatPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Handle file selection and upload
+  async function handleFileSelect(file: File) {
+    if (uploading) return;
+    setUploading(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error uploading file");
+      }
+
+      const data = await res.json();
+      setAttachedFile({ name: data.fileName, text: data.text });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Error al subir archivo.";
+      setError(msg);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  // Remove attached file
+  function removeFile() {
+    setAttachedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  // Trigger file picker
+  function openFilePicker() {
+    fileInputRef.current?.click();
+  }
+
   if (status === "loading") {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -83,9 +136,15 @@ export default function ChatPage() {
     e.preventDefault();
     if (!input.trim() || loading || !activeId) return;
 
-    const userMessage: Message = { role: "user", content: input.trim() };
+    const userMessage: Message = {
+      role: "user",
+      content: attachedFile
+        ? `[Archivo adjunto: ${attachedFile.name}]\n\n${input.trim()}\n\n--- Contenido del documento ---\n${attachedFile.text}`
+        : input.trim(),
+    };
     addMessage(activeId, userMessage);
     setInput("");
+    removeFile();
     setLoading(true);
     setError("");
 
@@ -221,6 +280,12 @@ export default function ChatPage() {
           loading={loading}
           handleSubmit={handleSubmit}
           disabled={!activeId}
+          attachedFile={attachedFile}
+          uploading={uploading}
+          onFileSelect={handleFileSelect}
+          onRemoveFile={removeFile}
+          onOpenFilePicker={openFilePicker}
+          fileInputRef={fileInputRef as React.RefObject<HTMLInputElement | null>}
         />
       </div>
     );
@@ -328,6 +393,12 @@ export default function ChatPage() {
         setInput={setInput}
         loading={loading}
         handleSubmit={handleSubmit}
+        attachedFile={attachedFile}
+        uploading={uploading}
+        onFileSelect={handleFileSelect}
+        onRemoveFile={removeFile}
+        onOpenFilePicker={openFilePicker}
+        fileInputRef={fileInputRef as React.RefObject<HTMLInputElement | null>}
       />
     </div>
   );
@@ -339,12 +410,24 @@ function ChatInput({
   loading,
   handleSubmit,
   disabled,
+  attachedFile,
+  uploading,
+  onFileSelect,
+  onRemoveFile,
+  onOpenFilePicker,
+  fileInputRef,
 }: {
   input: string;
   setInput: (v: string) => void;
   loading: boolean;
   handleSubmit: (e: FormEvent) => Promise<void>;
   disabled?: boolean;
+  attachedFile: { name: string; text: string } | null;
+  uploading: boolean;
+  onFileSelect: (file: File) => void;
+  onRemoveFile: () => void;
+  onOpenFilePicker: () => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 }) {
   return (
     <div className="border-t bg-white px-4 py-4 lg:px-6">
@@ -353,6 +436,22 @@ function ChatInput({
         className="mx-auto flex max-w-3xl items-end gap-3"
       >
         <div className="relative flex-1">
+          {/* File attachment badge */}
+          {attachedFile && (
+            <div className="mb-2 flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5">
+              <FileText className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" />
+              <span className="flex-1 truncate text-xs font-medium text-gray-700">
+                {attachedFile.name}
+              </span>
+              <button
+                type="button"
+                onClick={onRemoveFile}
+                className="flex-shrink-0 rounded p-0.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -364,13 +463,42 @@ function ChatInput({
             }}
             placeholder="Escribe tu consulta legal aquí..."
             rows={1}
-            disabled={loading}
-            className="min-h-[48px] w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-black placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black disabled:opacity-50"
+            disabled={loading || uploading}
+            className="min-h-[48px] w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 pr-12 text-sm text-black placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black disabled:opacity-50"
           />
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.docx,.doc,.txt,.md"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                onFileSelect(file);
+              }
+              // Reset so the same file can be re-selected
+              e.target.value = "";
+            }}
+          />
+          {/* Attachment button */}
+          <button
+            type="button"
+            onClick={onOpenFilePicker}
+            disabled={loading || uploading}
+            className="absolute bottom-2.5 right-3 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+            title="Adjuntar archivo"
+          >
+            {uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Paperclip className="h-4 w-4" />
+            )}
+          </button>
         </div>
         <button
           type="submit"
-          disabled={disabled || !input.trim() || loading}
+          disabled={disabled || !input.trim() || loading || uploading}
           className="flex h-[48px] w-[48px] flex-shrink-0 items-center justify-center rounded-xl bg-black text-white shadow-sm transition-all hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? (

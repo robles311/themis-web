@@ -78,6 +78,31 @@ export async function updatePassword(email: string, newPassword: string): Promis
   return (result.rowCount ?? 0) > 0
 }
 
+export async function updateUser(email: string, data: { name?: string; email?: string }): Promise<User | null> {
+  const sets: string[] = []
+  const values: any[] = []
+  let idx = 1
+
+  if (data.name !== undefined) {
+    sets.push(`name = $${idx++}`)
+    values.push(data.name)
+  }
+  if (data.email !== undefined) {
+    sets.push(`email = $${idx++}`)
+    values.push(data.email)
+  }
+
+  if (sets.length === 0) return null
+
+  values.push(email)
+  const result = await query<UserRow>(
+    `UPDATE users SET ${sets.join(', ')} WHERE email = $${idx}
+     RETURNING id, email, name, created_at`,
+    values
+  )
+  return result.rows[0] || null
+}
+
 export async function listUsers(): Promise<User[]> {
   await ensureUsersTable()
   const result = await query<UserRow>(

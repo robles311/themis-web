@@ -55,13 +55,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const apiKey = process.env.DEEPSEEK_API_KEY
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'DEEPSEEK_API_KEY is not configured' },
-        { status: 500 }
-      )
-    }
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
+    const ollamaHost = process.env.OLLAMA_HOST || 'http://localhost:11434'
+    const useDeepSeek = process.env.DEEPSEEK_API_KEY && process.env.USE_DEEPSEEK === 'true'
+    const useOpenAI = process.env.OPENAI_API_KEY && process.env.USE_OPENAI === 'true'
 
     // Build messages array with system prompt
     const apiMessages = [
@@ -72,24 +69,54 @@ export async function POST(request: Request) {
       })),
     ]
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
+    let apiUrl: string
+    let apiHeaders: Record<string, string>
+    let apiBody: Record<string, unknown>
+
+    if (useDeepSeek) {
+      apiUrl = 'https://api.deepseek.com/v1/chat/completions'
+      apiHeaders = {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      }
+      apiBody = {
         model: 'deepseek-chat',
         messages: apiMessages,
         stream: true,
-      }),
+      }
+    } else if (useOpenAI) {
+      apiUrl = 'https://api.openai.com/v1/chat/completions'
+      apiHeaders = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      }
+      apiBody = {
+        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        messages: apiMessages,
+        stream: true,
+      }
+    } else {
+      // Default: use Ollama (local, free)
+      apiUrl = `${ollamaHost}/v1/chat/completions`
+      apiHeaders = { 'Content-Type': 'application/json' }
+      apiBody = {
+        model: process.env.OLLAMA_MODEL || 'qwen2.5:7b',
+        messages: apiMessages,
+        stream: true,
+      }
+    }
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: apiHeaders,
+      body: JSON.stringify(apiBody),
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('DeepSeek API error:', response.status, errorText)
+      console.error('Chat API provider error:', response.status, errorText)
       return NextResponse.json(
-        { error: `DeepSeek API error: ${response.status}` },
+        { error: `AI provider error: ${response.status}` },
         { status: response.status }
       )
     }
@@ -97,7 +124,7 @@ export async function POST(request: Request) {
     const stream = response.body
     if (!stream) {
       return NextResponse.json(
-        { error: 'No response stream from DeepSeek' },
+        { error: 'No response stream from AI provider' },
         { status: 500 }
       )
     }

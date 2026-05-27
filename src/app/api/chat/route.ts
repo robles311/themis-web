@@ -2,12 +2,35 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { SPECIALTY_PROMPTS, DEFAULT_PROMPT } from '@/lib/legal-prompts'
 import { buildRagContext } from '@/lib/rag'
+import { checkUsageLimit, incrementQueryCount, ensureSubscriptionTables } from '@/lib/subscription-db'
 
 export async function POST(request: Request) {
   try {
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const userId = parseInt(session.user.id, 10)
+    if (isNaN(userId)) {
+      return NextResponse.json({ error: 'Usuario inválido' }, { status: 400 })
+    }
+
+    // Verificar límite de consultas (free = 30/mes, pro = ilimitado)
+    await ensureSubscriptionTables()
+    const usage = await checkUsageLimit(userId)
+    if (!usage.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Límite de consultas alcanzado',
+          message: `Has alcanzado tu límite de ${usage.limit} consultas este mes. Actualiza a Themis Pro para consultas ilimitadas.`,
+          used: usage.used,
+          limit: usage.limit,
+          plan: usage.plan,
+          upgradeUrl: '/pricing',
+        },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
@@ -135,6 +158,13 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
+
+    // Incrementar contador de consultas del usuario
+    const now = new Date()
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    incrementQueryCount(userId, month).catch((err) =>
+      console.error('[Chat] Failed to increment query count:', err)
+    )
 
     return new Response(stream, {
       headers: {

@@ -15,6 +15,7 @@ import {
   User,
 } from "lucide-react";
 import { SPECIALTY_LIST, specialtyDisplayName, type SpecialtyId } from "@/lib/specialties";
+import { UsageIndicator } from "@/components/chat/usage-indicator";
 
 type Message = {
   role: "user" | "assistant";
@@ -195,6 +196,9 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               </div>
             )}
           </div>
+
+          {/* Usage indicator */}
+          <UsageIndicator />
 
           {/* Sidebar footer */}
           <div className="border-t px-4 py-4">

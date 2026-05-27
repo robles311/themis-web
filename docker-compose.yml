@@ -12,19 +12,18 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
-      timeout: 5s
       retries: 5
     restart: unless-stopped
 
   app:
-    build: .
+    build:
+      context: .
     ports:
       - "3002:3000"
-    env_file: ".env"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/asistente_juridico
-      - AUTH_URL=http://localhost:3002
-      - NEXT_PUBLIC_APP_URL=http://localhost:3002
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/asistente_juridico
+      AUTH_URL: http://localhost:3002
+      NEXT_PUBLIC_APP_URL: http://localhost:3002
     depends_on:
       db:
         condition: service_healthy

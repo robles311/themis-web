@@ -1,0 +1,287 @@
+/**
+ * seed-docs.ts
+ *
+ * Seeds the `legal_documents` PostgreSQL table (schema defined in src/lib/rag.ts)
+ * with high-quality Chilean legal article content across all 7 legal specialties.
+ *
+ * Usage:
+ *   npx tsx src/lib/seed-docs.ts
+ *
+ * Requires DATABASE_URL and DEEPSEEK_API_KEY environment variables.
+ */
+
+import { ensureTable, storeDocument, closePool } from './rag'
+
+export interface SeedDoc {
+  specialty: string
+  code_name: string
+  article_number?: string
+  title: string
+  content: string
+}
+
+export const SEED_DOCUMENTS: SeedDoc[] = [
+  // TRIBUTARIO
+  {
+    specialty: 'TRIBUTARIO',
+    code_name: 'Código Tributario',
+    article_number: '1',
+    title: 'Concepto de impuesto y ámbito de aplicación',
+    content:
+      'El Código Tributario chileno, en su artículo 1°, establece que las disposiciones de este Código son aplicables a todas las materias de tributación fiscal, sea que los impuestos se recauden por el Servicio de Impuestos Internos, por la Tesorería General de la República o por las Aduanas. Los impuestos se clasifican en impuestos directos, que gravan la renta y el patrimonio, e impuestos indirectos, que gravan el consumo y las transferencias. El artículo define los principios de legalidad, igualdad y proporcionalidad que rigen el sistema tributario chileno, conforme al artículo 19 N° 20 de la Constitución Política de la República.',
+  },
+  {
+    specialty: 'TRIBUTARIO',
+    code_name: 'D.L. N° 824 (Ley sobre Impuesto a la Renta)',
+    article_number: '1-2',
+    title: 'Impuesto a la Renta: hecho gravado y concepto de renta',
+    content:
+      'La Ley sobre Impuesto a la Renta (LIR), contenida en el Decreto Ley N° 824, establece en su artículo 1° un impuesto anual sobre las rentas obtenidas por las personas naturales y jurídicas residentes o domiciliadas en Chile. El artículo 2° define el concepto de "renta" como todos los ingresos que constituyan utilidades o beneficios que perciba una persona, incluyendo los ingresos en dinero, en especie, las ganancias de capital, y cualquier otro beneficio que incremente el patrimonio del contribuyente. Quedan exceptuados los ingresos expresamente excluidos por ley, como las indemnizaciones por daño moral o las herencias, legados y donaciones.',
+  },
+  {
+    specialty: 'TRIBUTARIO',
+    code_name: 'D.L. N° 825 (Ley sobre Impuesto a las Ventas y Servicios)',
+    article_number: '2',
+    title: 'IVA: hecho gravado básico',
+    content:
+      'La Ley sobre Impuesto a las Ventas y Servicios (LIVA), contenida en el Decreto Ley N° 825, establece en su artículo 2° que el hecho gravado básico del Impuesto al Valor Agregado (IVA) es la venta de bienes corporales muebles e inmuebles situados en Chile, realizada por un vendedor habitual. También constituyen hechos gravados la importación de bienes, la prestación de servicios habituales, y los contratos de instalación o confección de bienes muebles. La tasa actual del IVA es del 19%, aplicable sobre la base imponible determinada según las reglas del artículo 14 de la misma ley.',
+  },
+  {
+    specialty: 'TRIBUTARIO',
+    code_name: 'D.L. N° 824 (Ley sobre Impuesto a la Renta)',
+    article_number: '14 A-B',
+    title: 'Regímenes 14 A y 14 B – Renta Efectiva',
+    content:
+      'La Ley sobre Impuesto a la Renta contempla dos regímenes generales de renta efectiva para empresas: el Régimen 14 A (Régimen General o Semi Integrado) y el Régimen 14 B (Régimen Pyme). El Régimen 14 A, contenido en el artículo 14 letra A, es aplicable a empresas de cualquier tamaño que no opten por el régimen Pyme, con una tasa de impuesto de primera categoría del 27% y un sistema de crédito parcial contra los impuestos finales de los propietarios. El Régimen 14 B, del artículo 14 letra B, está diseñado para pequeñas y medianas empresas con ingresos anuales inferiores a 75.000 UF, con una tasa reducida de primera categoría del 25% y beneficios en materia de depreciación y deducción de activos fijos.',
+  },
+
+  // FAMILIAR
+  {
+    specialty: 'FAMILIAR',
+    code_name: 'Ley N° 19.947 (Matrimonio Civil)',
+    article_number: '53-56',
+    title: 'Causales de divorcio',
+    content:
+      'La Ley N° 19.947 de Matrimonio Civil establece en sus artículos 53 a 56 las causales de divorcio. El divorcio puede ser de común acuerdo (Art. 55), cuando ambos cónyuges solicitan el divorcio y han transcurrido al menos un año desde la celebración del matrimonio. También procede el divorcio unilateral o por voluntad de uno de los cónyuges (Art. 55 inciso 2°), cuando se acredita el cese de la convivencia conyugal durante un período superior a tres años. Existe además el divorcio por culpa (Art. 54), fundado en una infracción grave de los deberes del matrimonio que haga intolerable la vida en común, como el abandono del hogar, la violencia intrafamiliar o el adulterio. En todos los casos, el juez debe velar por el bienestar de los hijos y la equidad en la distribución de los bienes.',
+  },
+  {
+    specialty: 'FAMILIAR',
+    code_name: 'Ley N° 19.968 (Tribunales de Familia)',
+    article_number: '8, 22, 55, 103',
+    title: 'Procedimiento ante Tribunales de Familia',
+    content:
+      'La Ley N° 19.968 crea los Tribunales de Familia y establece el procedimiento aplicable a las materias de familia. El artículo 8° establece los principios rectores: oralidad, inmediación, concentración, publicidad y especialización. Los procedimientos se rigen por las reglas del artículo 55 y siguientes, destacando que toda causa de familia debe someterse a un Consejo Técnico y, en materias como alimentos y cuidado personal, es obligatoria la mediación familiar previa (Art. 103) antes de iniciar un juicio. El juez de familia tiene amplias facultades para decretar medidas cautelares de oficio (Art. 22), incluyendo la suspensión del cuidado personal, la prohibición de salida del país y el ingreso a programas de protección.',
+  },
+  {
+    specialty: 'FAMILIAR',
+    code_name: 'Código Civil',
+    article_number: '321-337',
+    title: 'Obligación de alimentos',
+    content:
+      'Los artículos 321 a 337 del Código Civil chileno regulan la obligación de alimentos. El artículo 321 define los alimentos como todo lo que es indispensable para el sustento, habitación, vestido y salud de la persona alimentaria. Los alimentos comprenden también la educación e instrucción del alimentario cuando es menor de edad. El artículo 323 establece que los alimentos se deben en proporción al caudal del que los da y a las necesidades del que los recibe. El artículo 332 señala que la obligación de alimentos entre padres e hijos se extiende hasta los 21 años del alimentario, y excepcionalmente hasta los 28 años si este se encuentra estudiando una carrera profesional o técnica. El artículo 337 establece que la obligación de alimentos termina por la muerte del alimentario o del alimentante, por haberse extinguido la necesidad del alimentario, o por la adopción del alimentario menor de edad.',
+  },
+  {
+    specialty: 'FAMILIAR',
+    code_name: 'Ley N° 20.066 (Violencia Intrafamiliar)',
+    article_number: '1, 5, 14',
+    title: 'Violencia intrafamiliar: concepto, medidas cautelares y sanciones',
+    content:
+      'La Ley N° 20.066 sobre Violencia Intrafamiliar establece en su artículo 1° que la violencia intrafamiliar es todo maltrato que afecte la vida, la integridad física o psíquica, la libertad o la seguridad de una persona, cometido por un miembro de su familia. El artículo 5° faculta al juez de familia para decretar medidas cautelares inmediatas, como la prohibición de acercarse al domicilio o lugar de trabajo de la víctima, la suspensión del régimen de visitas, y la entrega de alimentos provisorios. El artículo 14 establece las sanciones aplicables, que pueden consistir en multas de hasta 20 UTM o la obligación de asistir a programas de rehabilitación. Cuando la violencia es constitutiva de delito, se aplican las reglas del Código Procesal Penal y las penas del Código Penal.',
+  },
+
+  // PENAL
+  {
+    specialty: 'PENAL',
+    code_name: 'Código Penal',
+    article_number: '1-10',
+    title: 'Principios generales de la responsabilidad penal',
+    content:
+      'El Código Penal chileno establece en sus artículos 1° al 10 los principios generales de la responsabilidad penal. El artículo 1° define el delito como toda acción u omisión voluntaria penada por la ley. El artículo 2° establece que las penas se clasifican en crímenes, simples delitos y faltas, según su gravedad. Los crímenes son las infracciones que la ley castiga con penas de presidio, reclusión o extrañamiento mayores; los simples delitos, las que castiga con presidio o reclusión menores; y las faltas, las que castiga con penas leves como la prisión en su grado mínimo o multas. El artículo 10 establece las causas de exención de responsabilidad penal, entre ellas la demencia, la fuerza irresistible, el legítimo ejercicio de un derecho, la legítima defensa propia o de un tercero (con los requisitos del artículo 10 N° 4), el estado de necesidad, y el cumplimiento de un deber.',
+  },
+  {
+    specialty: 'PENAL',
+    code_name: 'Código Procesal Penal (Ley N° 19.696)',
+    article_number: '1, 77-182, 229, 272-344',
+    title: 'Etapas del proceso penal',
+    content:
+      'El Código Procesal Penal chileno, en su artículo 1°, establece que el proceso penal se rige por los principios de oralidad, publicidad, inmediación, contradicción, concentración y continuidad. Las etapas del procedimiento son: (1) Investigación, dirigida por el Ministerio Público (Arts. 77-182), que incluye la formalización de la investigación (Art. 229) como acto en que el fiscal comunica al imputado que se está llevando a cabo una investigación en su contra; (2) Preparación del juicio oral (Arts. 245-271), donde la defensa puede oponer excepciones y ofrecer pruebas; (3) Juicio oral (Arts. 272-344), etapa central donde se rinde la prueba y se dicta la sentencia; y (4) Recursos (Arts. 345-380), incluyendo el recurso de nulidad y el recurso de apelación. El artículo 182 establece los plazos máximos de investigación: dos años para delitos simples y cinco años para delitos complejos.',
+  },
+  {
+    specialty: 'PENAL',
+    code_name: 'Ley N° 20.084 (Responsabilidad Penal Adolescente)',
+    article_number: '3, 6, 18, 21',
+    title: 'Responsabilidad penal adolescente',
+    content:
+      'La Ley N° 20.084 establece un sistema de responsabilidad penal para adolescentes de 14 a 17 años. El artículo 3° señala que los adolescentes son responsables penalmente por los delitos que cometan, pero están sujetos a un régimen especial sancionatorio y procesal. Las sanciones aplicables (Art. 6°) incluyen la internación en régimen cerrado o semicerrado, la libertad asistida, la prestación de servicios comunitarios, la reparación del daño causado, y la amonestación. La duración máxima de las sanciones privativas de libertad es de cinco años (Art. 18°), reduciéndose a dos años para mayores de 14 y menores de 16 años. El artículo 21° establece que los adolescentes gozan de todas las garantías procesales del Código Procesal Penal, con las adaptaciones necesarias para asegurar su interés superior.',
+  },
+
+  // CIVIL
+  {
+    specialty: 'CIVIL',
+    code_name: 'Código Civil',
+    article_number: '1437-1469',
+    title: 'Teoría de las obligaciones',
+    content:
+      'El Título XII del Libro IV del Código Civil chileno regula las obligaciones. El artículo 1437 define las fuentes de las obligaciones: los contratos, los cuasicontratos, los delitos, los cuasidelitos y la ley. El artículo 1438 define el contrato como un acto por el cual una parte se obliga para con otra a dar, hacer o no hacer alguna cosa. Los artículos 1440 a 1444 clasifican los contratos en bilaterales y unilaterales, onerosos y gratuitos, conmutativos y aleatorios, principales y accesorios, reales y consensuales. El artículo 1451 establece que el consentimiento no es válido si ha sido dado por error, fuerza o dolo. El artículo 1460 define los elementos esenciales de todo contrato: el consentimiento, el objeto y la causa. Los artículos 1464 a 1469 regulan el objeto de las obligaciones, que debe ser real o posible, lícito y determinado o determinable.',
+  },
+  {
+    specialty: 'CIVIL',
+    code_name: 'Código Civil',
+    article_number: '2314-2334',
+    title: 'Responsabilidad extracontractual',
+    content:
+      'Los artículos 2314 a 2334 del Código Civil regulan la responsabilidad extracontractual. El artículo 2314 establece que el que ha cometido un delito o cuasidelito que ha inferido daño a otro está obligado a la indemnización del daño causado, sin perjuicio de la pena que le impongan las leyes por el delito o cuasidelito. El artículo 2329 establece la regla general de responsabilidad por el hecho propio: por regla general todo daño que una persona cause a otra, sea por dolo, culpa o mera negligencia, debe ser reparado. Los artículos 2320 a 2326 regulan la responsabilidad por el hecho ajeno, incluyendo la responsabilidad de los padres por los hijos, de los tutores por los pupilos, de los empleadores por sus dependientes, y de los establecimientos educacionales por los alumnos. La prescripción de la acción de indemnización es de cuatro años, contados desde la perpetración del acto (Art. 2332).',
+  },
+  {
+    specialty: 'CIVIL',
+    code_name: 'Código Civil',
+    article_number: '951-999',
+    title: 'Sucesión por causa de muerte',
+    content:
+      'El Libro III del Código Civil regula la sucesión por causa de muerte. El artículo 951 establece que la sucesión puede ser testada o intestada. La sucesión intestada (Arts. 980-999) se defiere a los descendientes del causante, ascendientes, cónyuge sobreviviente, y colaterales hasta el sexto grado, en ese orden de prelación. El artículo 982 dispone que los hijos del causante heredan por partes iguales, mientras que el artículo 988 regula el derecho de representación a favor de los descendientes de un hijo premuerto. El artículo 989 confiere al cónyuge sobreviviente una cuarta parte de la herencia cuando concurre con descendientes. El artículo 996 regula la sucesión de los colaterales, prefiriendo los hermanos enteros a los medios hermanos. La legítima (Arts. 1181-1188) es la cuarta parte de la herencia que la ley reserva a determinados herederos forzosos.',
+  },
+
+  // LABORAL
+  {
+    specialty: 'LABORAL',
+    code_name: 'Código del Trabajo',
+    article_number: '7-20',
+    title: 'Contrato de trabajo: definición y formalidades',
+    content:
+      'Los artículos 7° a 20 del Código del Trabajo regulan el contrato de trabajo. El artículo 7° define el contrato individual de trabajo como una convención por la cual el empleador y el trabajador se obligan recíprocamente: el trabajador a prestar servicios personales bajo dependencia y subordinación del empleador, y este último a pagar una remuneración por dichos servicios. El artículo 8° presume la existencia del contrato de trabajo desde el primer día de la prestación de servicios. El artículo 10 enumera las menciones mínimas del contrato: lugar y fecha, identificación de las partes, naturaleza de los servicios, monto de la remuneración, duración y distribución de la jornada de trabajo, y plazo del contrato. El artículo 11 permite la inclusión de cláusulas adicionales. El artículo 18 establece que el contrato debe constar por escrito y firmarse dentro de los 15 días siguientes a la incorporación del trabajador.',
+  },
+  {
+    specialty: 'LABORAL',
+    code_name: 'Código del Trabajo',
+    article_number: '21-44',
+    title: 'Jornada laboral y descansos',
+    content:
+      'Los artículos 21° a 44 del Código del Trabajo regulan la jornada de trabajo y los descansos. El artículo 22 establece que la jornada ordinaria de trabajo no puede exceder las 45 horas semanales. El artículo 28 dispone que la jornada no puede distribuirse en más de 6 ni en menos de 4 días. Los artículos 34 y 35 regulan el descanso dentro de la jornada, estableciendo un mínimo de 30 minutos de colación. El artículo 36 garantiza el descanso dominical como regla general. La Reforma Laboral (Ley N° 20.940) redujo progresivamente la jornada de 45 a 40 horas semanales, y la Ley N° 21.561 estableció la gradualidad de dicha reducción entre 2023 y 2028. El artículo 38 regula los límites de la jornada extraordinaria, que no puede exceder de dos horas por día. Las horas extraordinarias deben pagarse con un recargo del 50% sobre la hora ordinaria.',
+  },
+  {
+    specialty: 'LABORAL',
+    code_name: 'Código del Trabajo',
+    article_number: '159-178',
+    title: 'Terminación del contrato de trabajo',
+    content:
+      'Los artículos 159° a 178 del Código del Trabajo regulan la terminación del contrato de trabajo. El artículo 159 enumera las causales de terminación sin derecho a indemnización: mutuo acuerdo, renuncia del trabajador, muerte del trabajador, vencimiento del plazo convenido, conclusión del trabajo o servicio que dio origen al contrato, y caso fortuito o fuerza mayor. El artículo 160 establece las causales de despido disciplinario: falta de probidad, conductas de acoso u hostigamiento, injurias al empleador, y ausencias injustificadas. El artículo 161 permite el despido por necesidades de la empresa, exigiendo un aviso previo de 30 días o el pago de una indemnización sustitutiva. El artículo 162 establece el finiquito como requisito para poner término a la relación laboral. Los artículos 163 a 171 regulan las indemnizaciones por años de servicio, y el artículo 168 establece las acciones que proceden en caso de despido injustificado.',
+  },
+
+  // CONTRATOS
+  {
+    specialty: 'CONTRATOS',
+    code_name: 'Código Civil',
+    article_number: '1443-1460',
+    title: 'Formación del consentimiento',
+    content:
+      'Los artículos 1443 a 1460 del Código Civil regulan la formación del consentimiento en los contratos. El consentimiento puede ser expreso o tácito (Art. 1443). El artículo 1444 distingue entre los elementos esenciales, de la naturaleza y accidentales de los contratos. Los elementos esenciales son aquellos sin los cuales el contrato no puede existir; los de la naturaleza son los que se entienden pertenecer al contrato sin necesidad de cláusula especial; y los accidentales son aquellos que las partes pueden agregar o suprimir mediante cláusulas especiales. La oferta y la aceptación se perfeccionan cuando quien hizo la oferta recibe la aceptación (Art. 1460). El artículo 1451 establece que el consentimiento debe ser libre y consciente, y que la fuerza, el dolo o el error vician el consentimiento. La oferta debe ser seria, completa y con intención de obligarse.',
+  },
+  {
+    specialty: 'CONTRATOS',
+    code_name: 'Código Civil',
+    article_number: '1681-1697',
+    title: 'Nulidad y rescisión',
+    content:
+      'Los artículos 1681 a 1697 del Código Civil regulan la nulidad de los actos y contratos. El artículo 1681 define la nulidad absoluta como aquella que se produce cuando el acto tiene un objeto ilícito, una causa ilícita, o cuando el acto ha sido ejecutado por una persona absolutamente incapaz. La nulidad absoluta puede ser declarada de oficio por el tribunal y puede ser alegada por cualquier persona que tenga interés en ello. El artículo 1684 regula la nulidad relativa (rescisión), que tiene lugar cuando faltan los requisitos de forma o cuando el consentimiento ha sido viciado por error, fuerza o dolo. La acción rescisoria dura cuatro años (Art. 1691). El artículo 1687 establece los efectos de la declaración de nulidad: las cosas vuelven al estado anterior al contrato, y las partes deben restituirse mutuamente lo recibido. El artículo 1689 establece que la nulidad absoluta no puede sanearse por confirmación, mientras que la nulidad relativa sí puede ser confirmada.',
+  },
+  {
+    specialty: 'CONTRATOS',
+    code_name: 'Código Civil',
+    article_number: '1793-1896',
+    title: 'Contrato de compraventa',
+    content:
+      'El Título XXIII del Libro IV del Código Civil regula el contrato de compraventa. El artículo 1793 define la compraventa como un contrato en que una de las partes (el vendedor) se obliga a transferir el dominio de una cosa a la otra (el comprador), y este se obliga a pagar por ella un precio en dinero. El artículo 1798 establece que la venta de cosa ajena es nula, salvo que el vendedor adquiera posteriormente el dominio. El artículo 1801 distingue entre la venta de bienes muebles y la venta de bienes raíces: la primera se perfecciona por el consentimiento, mientras que la segunda requiere escritura pública e inscripción en el Conservador de Bienes Raíces. Los artículos 1857 a 1868 regulan la obligación de saneamiento del vendedor, que comprende la evicción y los vicios redhibitorios. El artículo 1869 establece la acción resolutoria por falta de pago del comprador.',
+  },
+
+  // INMUEBLES
+  {
+    specialty: 'INMUEBLES',
+    code_name: 'Código Civil',
+    article_number: '577-738',
+    title: 'Derechos reales y dominio',
+    content:
+      'Los artículos 577 a 738 del Código Civil regulan los derechos reales. El artículo 577 define los derechos reales como aquellos que se tienen sobre una cosa sin respecto a determinada persona. Son derechos reales el dominio (Arts. 582-589), la herencia, el usufructo (Arts. 764-810), el uso y habitación (Arts. 811-820), las servidumbres activas (Arts. 821-886), la prenda y la hipoteca. El artículo 582 define el dominio como el derecho real sobre una cosa corporal para gozar y disponer de ella arbitrariamente, no siendo contra ley o contra derecho ajeno. La propiedad se adquiere por ocupación, accesión, tradición, sucesión por causa de muerte, o por prescripción (Arts. 589-692). Los artículos 724 a 738 regulan la posesión, que es la tenencia de una cosa con ánimo de señor y dueño, y que puede conducir a la adquisición del dominio por prescripción adquisitiva.',
+  },
+  {
+    specialty: 'INMUEBLES',
+    code_name: 'Ley N° 21.442 (Copropiedad Inmobiliaria)',
+    article_number: '1, 5, 35-65, 67, 84',
+    title: 'Copropiedad Inmobiliaria',
+    content:
+      'La Ley N° 21.442 sobre Copropiedad Inmobiliaria, publicada en 2022, regula el régimen de copropiedad de condominios. El artículo 1° define un condominio como aquel conjunto de inmuebles que pertenecen proindiviso a varios propietarios, con bienes de dominio común. El artículo 5° establece que cada unidad está individualizada y se asigna un porcentaje sobre los bienes comunes. La administración del condominio se ejerce por una asamblea de copropietarios (Arts. 35-56) y un administrador (Arts. 57-65). El artículo 38 dispone que las asambleas se celebran al menos una vez al año y requieren un quorum mínimo del 30% de los copropietarios. El artículo 67 regula el fondo común de reserva, equivalente a un mes de gastos comunes. La ley también regula las multas por infracción al reglamento de copropiedad (Art. 84), que no pueden exceder de 1 UTM por infracción.',
+  },
+  {
+    specialty: 'INMUEBLES',
+    code_name: 'Ley N° 18.101 (Arrendamientos de inmuebles urbanos)',
+    article_number: '1, 4, 7, 15, 22',
+    title: 'Arrendamiento de bienes inmuebles',
+    content:
+      'La Ley N° 18.101 regula los arrendamientos de bienes inmuebles en Chile. El artículo 1° establece que el arrendamiento puede ser de vivienda o de local comercial, y que se rige por las normas del Código Civil y las disposiciones especiales de esta ley. El artículo 4° exige que el contrato de arrendamiento de vivienda conste por escrito. El artículo 7° regula el aumento de la renta, que puede hacerse anualmente de acuerdo al Índice de Precios al Consumidor (IPC). La Ley N° 21.461, que modificó la Ley N° 18.101, establece nuevas causales de término del arrendamiento y obliga al arrendador a pagar una indemnización al arrendatario en caso de término anticipado sin justa causa. El artículo 15 regula la caución, equivalente a un máximo de un mes de renta. El artículo 22 establece que el arrendatario puede subarrendar el inmueble solo con autorización expresa del arrendador.',
+  },
+]
+
+export async function seed(): Promise<void> {
+  if (!process.env.DATABASE_URL) {
+    console.error('❌ DATABASE_URL environment variable is not set.')
+    process.exit(1)
+  }
+
+  // Load pre-computed embeddings from JSON (generated with fastembed locally)
+  const fs = await import('fs')
+  const path = await import('path')
+  const seedDataPath = path.join(process.cwd(), 'seed-data.json')
+
+  if (!fs.existsSync(seedDataPath)) {
+    console.error('❌ seed-data.json not found. Run scripts/generate-embeddings.py first.')
+    process.exit(1)
+  }
+
+  const seedDocs: Array<{
+    specialty: string
+    code_name: string
+    article_number: string
+    title: string
+    content: string
+    embedding: number[]
+  }> = JSON.parse(fs.readFileSync(seedDataPath, 'utf-8'))
+
+  await ensureTable()
+  // Clear existing docs
+  const { query } = await import('./db')
+  await query('TRUNCATE legal_documents', [])
+
+  let inserted = 0
+  for (const doc of seedDocs) {
+    const vec = `[${doc.embedding.join(',')}]`
+    await query(
+      `INSERT INTO legal_documents (specialty, code_name, article_number, title, content, embedding)
+       VALUES ($1, $2, $3, $4, $5, $6::vector)`,
+      [doc.specialty, doc.code_name, doc.article_number, doc.title, doc.content, vec]
+    )
+    inserted++
+  }
+
+  console.log(`✅ Seeded ${inserted} legal documents across ${new Set(seedDocs.map((d) => d.specialty)).size} specialties:`)
+  const counts: Record<string, number> = {}
+  for (const d of seedDocs) {
+    counts[d.specialty] = (counts[d.specialty] || 0) + 1
+  }
+  for (const [spec, count] of Object.entries(counts)) {
+    console.log(`   • ${spec}: ${count} articles`)
+  }
+  console.log('\n✨ Seed completed successfully.')
+}
+
+const isDirectRun =
+  typeof require !== 'undefined' &&
+  typeof module !== 'undefined' &&
+  require.main === module
+
+if (isDirectRun) {
+  seed()
+    .catch((err) => {
+      console.error('❌ Seed failed:', err)
+      process.exit(1)
+    })
+    .finally(() => closePool())
+}

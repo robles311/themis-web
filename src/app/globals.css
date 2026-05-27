@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@source "../app";
+@source "../components";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius: 0.5rem;
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0 0 0);
+  --card: oklch(0.98 0 0);
+  --card-foreground: oklch(0 0 0);
+  --primary: oklch(0 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.92 0 0);
+  --secondary-foreground: oklch(0 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.9 0 0);
+  --accent-foreground: oklch(0 0 0);
+  --destructive: oklch(0.6 0.2 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.87 0 0);
+  --input: oklch(0.87 0 0);
+  --ring: oklch(0 0 0);
+  color-scheme: light;
+}
+
+/* Fallback: essential color utilities in case Tailwind v4 scanning doesn't fire */
+.bg-primary { background-color: var(--primary); }
+.bg-primary\/5 { background-color: color-mix(in srgb, var(--primary) 5%, white); }
+.bg-primary\/10 { background-color: color-mix(in srgb, var(--primary) 10%, white); }
+.bg-card { background-color: var(--card); }
+.bg-muted { background-color: var(--muted); }
+.bg-muted\/30 { background-color: color-mix(in srgb, var(--muted) 30%, transparent); }
+.bg-background { background-color: var(--background); }
+.bg-white\/10 { background-color: color-mix(in srgb, white 10%, transparent); }
+.text-primary { color: var(--primary); }
+.text-card-foreground { color: var(--card-foreground); }
+.text-muted-foreground { color: var(--muted-foreground); }
+.text-primary-foreground { color: var(--primary-foreground); }
+.text-foreground { color: var(--foreground); }
+.text-white\/70 { color: color-mix(in srgb, white 70%, transparent); }
+.text-white\/80 { color: color-mix(in srgb, white 80%, transparent); }
+.border-primary { border-color: var(--primary); }
+.border-primary\/30 { border-color: color-mix(in srgb, var(--primary) 30%, transparent); }
+.border-white\/20 { border-color: color-mix(in srgb, white 20%, transparent); }
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.font-serif {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+}
+
+/* ==========================================================================
+   Marketing redesign — keyframes & animation utilities
+   ========================================================================== */
+
+@keyframes themis-pulse-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.3); }
+}
+
+@keyframes themis-chat-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes themis-typing-bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40%           { transform: scale(1); }
+}
+
+@keyframes themis-spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-themis-pulse {
+  animation: themis-pulse-glow 2s infinite;
+}
+
+.animate-themis-fade-in {
+  animation: themis-chat-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-themis-typing {
+  animation: themis-typing-bounce 1.4s infinite ease-in-out both;
+}
+
+.animate-themis-spin {
+  animation: themis-spin 0.8s linear infinite;
+}

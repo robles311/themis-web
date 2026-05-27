@@ -90,9 +90,14 @@ export default function ChatPage() {
     setError("");
 
     // Build message history for the API
-    const updatedConv = conversations.find((c) => c.id === activeId);
-    const allMsgs = updatedConv?.messages || [];
-    const apiMessages = allMsgs.map((m: Message) => ({ role: m.role, content: m.content }));
+    // IMPORTANT: Read from activeConv, not conversations state —
+    // conversations is a stale closure captured at render time,
+    // while addMessage() hasn't triggered a re-render yet.
+    const existingMsgs = activeConv?.messages || [];
+    const apiMessages = [
+      ...existingMsgs.map((m: Message) => ({ role: m.role, content: m.content })),
+      { role: "user" as const, content: input.trim() },
+    ];
 
     try {
       const response = await fetch("/api/chat", {

@@ -69,6 +69,15 @@ export async function validatePassword(email: string, password: string): Promise
   return safeUser
 }
 
+export async function updatePassword(email: string, newPassword: string): Promise<boolean> {
+  const hash = hashPassword(newPassword)
+  const result = await query(
+    `UPDATE users SET password_hash = $1 WHERE email = $2`,
+    [hash, email]
+  )
+  return (result.rowCount ?? 0) > 0
+}
+
 export async function listUsers(): Promise<User[]> {
   await ensureUsersTable()
   const result = await query<UserRow>(
